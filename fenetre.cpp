@@ -71,9 +71,9 @@ fenetre::fenetre(): QWidget (){
 
 
 
-    slide1->setValue(0);
-    slide2->setValue(40);
-    slide3->setValue(10);
+    slide1->setValue(40);
+    slide2->setValue(80);
+    slide3->setValue(50);
     slide4->setValue(255);
     slide5->setValue(0);
     slide6->setValue(255);
@@ -86,9 +86,9 @@ fenetre::fenetre(): QWidget (){
 
     slide7->setValue(0);
 
-    Hmin=0;
-    Hmax=40;
-    Smin=10;
+    Hmin=40;
+    Hmax=80;
+    Smin=50;
     Smax=255;
     Vmin=0;
     Vmax=255;
@@ -97,6 +97,7 @@ fenetre::fenetre(): QWidget (){
     min_dist = 10;
     minR = 0;
     maxR = 100;
+    image_size=450;
 
     lowthreshold_canny=5;
 
@@ -122,13 +123,14 @@ fenetre::fenetre(): QWidget (){
     filename[3]="img4.png";
     filename[4]="img5.jpg";
     baselink = "C:\\image_for_Cpp\\";
-    link = baselink + filename[0];
+   // link = baselink + filename[0];
 
-    qDebug() << QString::fromStdString(link);
-    image = cv::imread(link, 1);
-    cv::cvtColor(image, fullImageHSV, cv::COLOR_BGR2HSV);
+   // qDebug() << QString::fromStdString(link);
+    //image = cv::imread(link, 1);
+   // cv::cvtColor(image, fullImageHSV, cv::COLOR_BGR2HSV);
+   // compute();
 
-    compute();
+    changeImage(0);
 
 }
 
@@ -136,8 +138,15 @@ void fenetre::changeImage(int ite){
 
     link = baselink + filename[ite];
     image = cv::imread(link, 1);
+
+
+    cv::Size size(image_size,image_size);//the dst image size,e.g.100x100
+    cv::resize(image,image,size);//resize image
+
     image.copyTo(image2);
     cv::cvtColor(image, fullImageHSV, cv::COLOR_BGR2HSV);
+
+
    // cv::cvtColor(image2, image2, cv::COLOR_BGR2GRAY);
     compute();
     //link = "C:\\Users\\Administrateur\\Desktop\\C++\\openCVtest\" + filename[0]";
@@ -196,6 +205,31 @@ void fenetre::setVvalue_max(int V){
     compute();
 }
 
+
+
+double cross(cv::Point v1,cv::Point v2){
+    return v1.x*v2.y - v1.y*v2.x;
+}
+
+cv::Point getIntersectionPoint(cv::Point a1, cv::Point a2, cv::Point b1, cv::Point b2){
+    cv::Point p = a1;
+    cv::Point q = b1;
+    cv::Point r(a2-a1);
+    cv::Point s(b2-b1);
+    cv::Point intPnt;
+
+    intPnt.x=0;
+    intPnt.y=0;
+   if(cross(r,s) == 0) {return intPnt;}
+
+   double t = cross(q-p,s)/cross(r,s);
+
+   return intPnt = p + t*r;
+//    return true;
+}
+
+
+
 void fenetre::compute(){
 
 
@@ -224,15 +258,69 @@ void fenetre::compute(){
          cv::circle( image2, center, radius, cv::Scalar(255,0,255), 3, cv::LINE_AA);
      }
 
+
+     cv::Mat border;
+     cv::Canny(fullImageHSV2,border,5,15);
+     cv::imshow("border",border);
+
+     std::vector<cv::Vec2f> lines;
+     cv::HoughLines(border,lines,1, CV_PI/90, 60, 0, 0 );
+
+     std::vector<cv::Vec4f> listpoints;
+
+     for( size_t i = 0; i < lines.size(); i++ )
+     {
+         float rho = lines[i][0], theta = lines[i][1];
+         cv::Point pt1, pt2;
+         double a = cos(theta), b = sin(theta);
+         double x0 = a*rho, y0 = b*rho;
+         pt1.x = cvRound(x0 + 1000*(-b));
+         pt1.y = cvRound(y0 + 1000*(a));
+         pt2.x = cvRound(x0 - 1000*(-b));
+         pt2.y = cvRound(y0 - 1000*(a));
+         cv::line( image2, pt1, pt2, cv::Scalar(0,0,255), 3, cv::LINE_AA);
+         cv::Vec4f l ;
+         l[0] = pt1.x;
+         l[1] = pt1.y;
+         l[2] = pt2.x;
+         l[3] = pt2.y;
+         listpoints.push_back(l);
+            }
+
+     for( size_t i = 0; i < listpoints.size(); i++ ){
+         for( size_t i2 = i+1; i2 < listpoints.size(); i2++ ){
+            qDebug() << i << " - " << i2;
+             cv::Point a1, a2,b1,b2,intPnt;
+             a1.x = listpoints[i][0];
+             a1.y = listpoints[i][1];
+             a2.x = listpoints[i][2];
+             a2.y = listpoints[i][3];
+             b1.x = listpoints[i2][0];
+             b1.y = listpoints[i2][1];
+             b2.x = listpoints[i2][2];
+             b2.y = listpoints[i2][3];
+
+
+           intPnt = getIntersectionPoint(a1, a2, b1, b2);
+           qDebug()<< "intersection:" <<intPnt.x <<" - " << intPnt.y <<"("<< image.rows <<"|"<< image2.cols<<")";
+           if ((intPnt.x<image_size)&(intPnt.y<image_size)&(intPnt.x>0)&(intPnt.y>0)){
+               cv::circle( image2, intPnt, 5, cv::Scalar(255,0,255), 3, cv::LINE_AA);
+           }
+
+
+         }
+
+     }
+
      cv::imshow("My Image", image2);
+
+
     // cv::Mat dst;
     // dst= cv::Scalar::all(0);
-
      //cv::imshow( "bord", dst );
 
 
 }
-
 
 
 

@@ -71,7 +71,7 @@ public slots:
     int min_dist;
     int maxR;
     int minR;
-
+    int image_size;
 
     std::string filename[5];
     std::string  link;
