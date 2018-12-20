@@ -5,6 +5,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include "iostream"
+
 fenetre::fenetre(): QWidget (){
 
     setFixedSize(400,400);
@@ -298,41 +300,53 @@ std::vector<cv::Point2f> sort_points(std::vector<cv::Point2f> input){
 
     std::vector<cv::Point2f> output;
     output.push_back(input[1]);
-    output.push_back(input[3]);
-    output.push_back(input[2]);
     output.push_back(input[0]);
+    output.push_back(input[2]);
+    output.push_back(input[3]);
     return output;
 
 }
 
 
-void four_point_transformation(cv::Mat image,  std::vector<cv::Point2f> vec ){
+cv::Mat four_point_transformation(cv::Mat image,  std::vector<cv::Point2f> vec,int *maxW, int *maxH ){
 
   vec = sort_points(vec);
     for (size_t i=0 ; i<vec.size();i++){
         qDebug()<<"four points"<<i<<vec[i].x<<"/"<<vec[i].y;
-        cv::circle( image, vec[i], 5, cv::Scalar(255,0,0), 3, cv::LINE_AA);
+   //     cv::circle( image, vec[i], 5, cv::Scalar(255,0,0), 3, cv::LINE_AA);
     }
-    cv::imshow("test",image);
+   // cv::imshow("test",image);
 
     double L1 = std::sqrt(pow((vec[1].x-vec[0].x),2) +pow((vec[1].y-vec[0].y),2)  );
     double L2 = std::sqrt(pow((vec[3].x-vec[2].x),2) +pow((vec[3].y-vec[2].y),2)  );
     double L3 = std::sqrt(pow((vec[2].x-vec[1].x),2) +pow((vec[2].y-vec[1].y),2)  );
     double L4 = std::sqrt(pow((vec[0].x-vec[3].x),2) +pow((vec[0].y-vec[3].y),2)  );
-    int maxWidth = std::max(int(L1), int(L2));
+    int maxWidth  = std::max(int(L1), int(L2));
     int maxHeight = std::max(int(L3), int(L4));
 
+    *maxW = maxWidth;
+    *maxH = maxHeight;
     std::vector<cv::Point2f> rec;
-    rec.push_back(cv::Point2f(0,0));
-    rec.push_back(cv::Point2f(maxWidth-1,0));
-    rec.push_back(cv::Point2f(maxWidth - 1, maxHeight - 1));
     rec.push_back(cv::Point2f(0,maxHeight - 1));
-    cv::Size ss= cv::Size(maxWidth,maxHeight);
+    rec.push_back(cv::Point2f(maxWidth - 1, maxHeight - 1));
+    rec.push_back(cv::Point2f(maxWidth-1,0));
+    rec.push_back(cv::Point2f(0,0));
+
+
+    //rec.push_back(cv::Point2f(0,0));
+   // rec.push_back(cv::Point2f(maxWidth-1,0));
+   // rec.push_back(cv::Point2f(maxWidth - 1, maxHeight - 1));
+   // rec.push_back(cv::Point2f(0,maxHeight - 1));
+
+
 
     cv::Mat M= cv::getPerspectiveTransform(vec,rec);
-    cv::Mat image_out;
-    cv::warpPerspective(image,image_out,M,ss);
-    cv::imshow("homgraphy?",image_out);
+    return M;
+
+  //  cv::Size ss= cv::Size(maxWidth,maxHeight);
+   // cv::Mat image_out;
+  //  cv::warpPerspective(image,image_out,M,ss);
+  //  cv::imshow("homgraphy?",image_out);
     //  warped = cv::warpPerspective(image, M, (maxWidth, maxHeight))
 
 }
@@ -384,8 +398,8 @@ void fenetre::compute(){
 
             float rho = lines[i][0], theta = lines[i][1];
             cv::Point pt1, pt2;
-            double a = cos(theta), b = sin(theta);
-            double x0 = a*rho, y0 = b*rho;
+            double a = cos(double(theta)), b = sin(double(theta));
+            double x0 = a*double(rho), y0 = b*double(rho);
             pt1.x = cvRound(x0 + 1000*(-b));
             pt1.y = cvRound(y0 + 1000*(a));
             pt2.x = cvRound(x0 - 1000*(-b));
@@ -414,14 +428,14 @@ void fenetre::compute(){
             if (ite_line<30){
                 qDebug() << i << " - " << i2;
                 cv::Point a1, a2,b1,b2,intPnt;
-                a1.x = listpoints[i][0];
-                a1.y = listpoints[i][1];
-                a2.x = listpoints[i][2];
-                a2.y = listpoints[i][3];
-                b1.x = listpoints[i2][0];
-                b1.y = listpoints[i2][1];
-                b2.x = listpoints[i2][2];
-                b2.y = listpoints[i2][3];
+                a1.x =int( listpoints[i][0]);
+                a1.y =int( listpoints[i][1]);
+                a2.x =int( listpoints[i][2]);
+                a2.y =int( listpoints[i][3]);
+                b1.x =int( listpoints[i2][0]);
+                b1.y =int( listpoints[i2][1]);
+                b2.x =int( listpoints[i2][2]);
+                b2.y =int( listpoints[i2][3]);
                 intPnt = getIntersectionPoint(a1, a2, b1, b2);
                 qDebug()<< "intersection:" <<intPnt.x <<" - " << intPnt.y <<"("<< image.rows <<"|"<< image2.cols<<")";
                 if ((intPnt.x<image_size)&(intPnt.y<image_size)&(intPnt.x>0)&(intPnt.y>0)){
@@ -439,7 +453,53 @@ void fenetre::compute(){
 
     cv::imshow("My Image", image2);
     if (vec.size()==4){
-        four_point_transformation( image2,  vec );
+        int maxW = image_size;
+        int maxH = image_size;
+
+        qDebug()<<"maxH before"<<maxH;
+        cv::Mat M=four_point_transformation( image2,  vec,&maxW,&maxH);
+        qDebug()<<"maxH after"<<maxH;
+
+
+        cv::Size ss= cv::Size(maxW,maxH);
+        cv::Mat image_out;
+        cv::warpPerspective(image,image_out,M,ss);
+
+
+        cv::Mat out,temp;
+        for (size_t i=0;i<circles.size();i++){
+          //  cv::Vec3f temp = cv::Vec3f(circles[0][0],circles[0][1],1);
+          temp = (cv::Mat_<double>(3,1) << circles[i][0],circles[i][1],1 );
+          out = M*temp;
+          cv::Point pt_out;
+          pt_out.x =out.at<double>(0,0)/out.at<double>(0,2);
+          pt_out.y =out.at<double>(0,1)/out.at<double>(0,2);
+          std::cout << pt_out  <<std::endl;
+          cv::circle( image_out, pt_out , 5, cv::Scalar(255,0,0), 3, cv::LINE_AA);
+          std::cout << out <<"="<< M <<" x "<< temp  <<std::endl;
+           qDebug()<<i;
+        }
+
+
+
+    /*   std::vector<cv::Point2f> inp_centers, out_centers;
+       cv::Mat out;
+       for (size_t i=0;i<circles.size();i++){
+           cv::Vec3f temp = cv::Vec3f(circles[0][0],circles[0][1],1);
+          out = M*(cv::Mat(temp));
+          std::cout << M <<" x "<< cv::Mat(temp)  <<std::endl;
+           qDebug()<<i;
+       }*/
+
+    //  std::cout << M << std::endl;
+     //  std::cout << out << std::endl;
+
+
+
+        cv::imshow("homgraphy?",image_out);
+
+
+
     }
 
 
