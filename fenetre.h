@@ -51,6 +51,10 @@ public slots:
     QSlider *slide12;
 
     QLabel  *label8;
+    QLabel  *label9;
+    QLabel  *label10;
+    QLabel  *label11;
+    QLabel  *label12;
 
     cv::Mat image;
     cv::Mat image2;

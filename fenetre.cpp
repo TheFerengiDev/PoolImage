@@ -8,7 +8,7 @@
 fenetre::fenetre(): QWidget (){
 
     setFixedSize(400,400);
-
+//Test
     slide1 = new QSlider(Qt::Horizontal,this);
     slide2 = new QSlider(Qt::Horizontal,this);
     slide3 = new QSlider(Qt::Horizontal,this);
@@ -23,7 +23,6 @@ fenetre::fenetre(): QWidget (){
     slide11 = new QSlider(Qt::Horizontal,this);
     slide12 = new QSlider(Qt::Horizontal,this);
 
-    label8 = new QLabel("test",this);
 
     slide1->move(50,50 );
     slide2->move(50,100);
@@ -39,6 +38,21 @@ fenetre::fenetre(): QWidget (){
     slide12->move(200,250);
 
     slide7->move(350,50);
+
+
+    label8  = new QLabel("Param1",this);
+    label9  = new QLabel("Param2",this);
+    label10 = new QLabel("minD",this);
+    label11 = new QLabel("minR",this);
+    label12 = new QLabel("maxR",this);
+
+    label8->move(200,40);
+    label9->move(200,90);
+    label10->move(200,140);
+    label11->move(200,190);
+    label12->move(200,240);
+
+
 
     slide1->setRange(0,179);
     slide2->setRange(0,179);
@@ -189,32 +203,14 @@ void fenetre::compute(){
     qDebug()<< "S:" << Smin << " - " << Smax;
     qDebug()<< "V:" << Vmin << " - " << Vmax;
 
-
-   // cv::namedWindow("My Image");
-  //  cv::imshow("My Image", image);
     image.copyTo(image2);
-   // cv::cvtColor(image2, image2, cv::COLOR_BGR2GRAY);
 
     cv::Mat fullImageHSV2;
     cv::imshow("My Image 2",fullImageHSV);
     cv::inRange(fullImageHSV, cv::Scalar(Hmin, Smin, Vmin), cv::Scalar(Hmax, Smax, Vmax), fullImageHSV2);
     cv::imshow("My Image 2",fullImageHSV2);
 
-   //cv::Mat detected_edges;
-   // cv::Canny(fullImageHSV2,detected_edges,lowthreshold_canny,lowthreshold_canny*3,3);
-   // cv::imshow("My Image bord",detected_edges);
-
     std::vector<cv::Vec3f> circles;
-
-    //cv::Mat gray;
-    //cv::cvtColor(fullImageHSV2, gray, cv::COLOR_HSV2RGB);
-    //cv::cvtColor(gray, gray, cv::COLOR_RGB2GRAY);
-    //cv::imshow("My Image 3",gray);
-
-  //  cv::bitwise_and(image2,fullImageHSV2,image2);
-  //  cv::imshow("My Image 2",image2);
-
-    //cv::HoughCircles(image2,circles,cv::HOUGH_GRADIENT,1,1);
     cv::HoughCircles(fullImageHSV2,circles,cv::HOUGH_GRADIENT, 2, min_dist, param_1, param_2 ,minR,maxR);
 
      for( size_t i = 0; i < circles.size(); i++ )
