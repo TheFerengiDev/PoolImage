@@ -6,7 +6,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 fenetre::fenetre(): QWidget (){
-    //test
+
     setFixedSize(400,400);
 
     slide1 = new QSlider(Qt::Horizontal,this);
