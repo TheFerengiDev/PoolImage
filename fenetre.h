@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QSlider>
 #include <QLabel>
+#include <QComboBox>
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/core.hpp>
@@ -55,6 +56,8 @@ public slots:
     QLabel  *label10;
     QLabel  *label11;
     QLabel  *label12;
+
+   QComboBox  *ListFilename;
 
     cv::Mat image;
     cv::Mat image2;
